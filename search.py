@@ -1,3 +1,6 @@
+# Kowsar Atazadeh
+# AI HW #1
+
 # search.py
 # ---------
 # Licensing Information:  You are free to use or extend these projects for
@@ -70,34 +73,63 @@ def tinyMazeSearch(problem):
     from game import Directions
     s = Directions.SOUTH
     w = Directions.WEST
+    n = Directions.NORTH
     return  [s, s, w, s, w, w, s, w]
 
+DFS, BFS, UCS, ASTAR = 0, 1, 2, 3
+
+def genericSearch(problem, searchType=DFS, heuristic=None):
+
+    fringe = None
+    fringeItem = None
+    visitedItems = []
+
+    if searchType == DFS or searchType == BFS:
+        if searchType == DFS:
+            fringe = util.Stack()
+        else:
+            fringe = util.Queue()
+        fringeItem = ([], problem.getStartState())  # (Route From StartState To CurrentState, CurrentState)
+        fringe.push(fringeItem)
+    elif searchType == UCS or searchType == ASTAR:
+        fringe = util.PriorityQueue()
+        fringeItem = ([], problem.getStartState(), 0)  # (Route From StartState To CurrentState, CurrentState, Route Cost)
+        fringe.push(fringeItem, 0)
+    else:
+        return []
+
+    while not fringe.isEmpty():
+        fringeItem = fringe.pop()
+        if problem.isGoalState(fringeItem[1]):
+            return fringeItem[0]
+        if fringeItem[1] in visitedItems:
+            continue
+        successors = problem.getSuccessors(fringeItem[1])
+        visitedItems += [fringeItem[1]]
+        for successor in successors:
+            if searchType == DFS or searchType == BFS:
+                newFringeItem = (fringeItem[0]+[successor[1]], successor[0])
+                fringe.push(newFringeItem)
+            elif searchType == UCS or searchType == ASTAR:
+                newFringeItem = (fringeItem[0]+[successor[1]], successor[0], successor[2]+fringeItem[2])
+                if searchType == UCS:
+                    fringe.push(newFringeItem, newFringeItem[2])
+                else:
+                    fringe.push(newFringeItem, newFringeItem[2]+heuristic(successor[0], problem))
+
+    return []
+
 def depthFirstSearch(problem):
-    """
-    Search the deepest nodes in the search tree first.
-
-    Your search algorithm needs to return a list of actions that reaches the
-    goal. Make sure to implement a graph search algorithm.
-
-    To get started, you might want to try some of these simple commands to
-    understand the search problem that is being passed in:
-
-    print "Start:", problem.getStartState()
-    print "Is the start a goal?", problem.isGoalState(problem.getStartState())
-    print "Start's successors:", problem.getSuccessors(problem.getStartState())
-    """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    """Search the deepest nodes in the search tree first."""
+    return genericSearch(problem, searchType=DFS)
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-
+    return genericSearch(problem, searchType=BFS)
+    
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return genericSearch(problem, searchType=UCS)
 
 def nullHeuristic(state, problem=None):
     """
@@ -108,9 +140,7 @@ def nullHeuristic(state, problem=None):
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
-
+    return genericSearch(problem, ASTAR, heuristic)
 
 # Abbreviations
 bfs = breadthFirstSearch
